@@ -3,7 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cuboShape – Image Resizer & Reshaper</title>
+
+  <!-- ══════════════════════════════════════════
+       PRIMARY SEO META
+       Canonical URL tells Google this page should
+       rank under cubosapiens.world/tools/image-editor
+       even though the app lives on a subdomain.
+  ══════════════════════════════════════════ -->
+  <title>Free Image Editor – Resize, Crop, Shape & Cut | Cubosapiens</title>
+  <meta name="description" content="Free browser-based image editor. Resize to any dimension, crop with drag handles, clip to custom shapes, cut subjects with polygon lasso, rotate, flip — no upload, 100% private." />
+  <meta name="keywords" content="image resizer, image cropper, background remover, polygon cut, image editor, free image tool, resize image online, crop image, shape image" />
+  <meta name="author" content="Cubosapiens" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+  <!-- Canonical — tells Google the preferred URL to index.
+       Even though the page is served from image-editor.cubosapiens.world,
+       Google will show cubosapiens.world/tools/image-editor in search results. -->
+  <link rel="canonical" href="https://cubosapiens.world/tools/image-editor" />
+
+  <!-- ══════════════════════════════════════════
+       FAVICON & SITE ICON
+       Google shows the favicon next to your URL
+       in search results. All sizes covered below.
+       Place these files in your domain root:
+         /favicon.ico          (32×32, classic)
+         /favicon-16x16.png
+         /favicon-32x32.png
+         /apple-touch-icon.png (180×180, iOS)
+         /android-chrome-192.png
+         /android-chrome-512.png
+         /site.webmanifest
+  ══════════════════════════════════════════ -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#e34949" />
+
+  <!-- ══════════════════════════════════════════
+       OPEN GRAPH (Facebook, LinkedIn, WhatsApp)
+       og:url must match canonical for consistency.
+  ══════════════════════════════════════════ -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://cubosapiens.world/tools/image-editor" />
+  <meta property="og:title"       content="Free Image Editor – Resize, Crop, Shape & Cut | Cubosapiens" />
+  <meta property="og:description" content="Resize, crop, shape-clip, polygon-lasso cut, rotate and flip images — all in your browser, no upload needed." />
+  <meta property="og:image"       content="https://cubosapiens.world/assets/og-image-editor.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height"content="630" />
+  <meta property="og:site_name"   content="Cubosapiens" />
+  <meta property="og:locale"      content="en_IN" />
+
+  <!-- ══════════════════════════════════════════
+       TWITTER CARD
+  ══════════════════════════════════════════ -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:site"        content="@cubosapiens" />
+  <meta name="twitter:url"         content="https://cubosapiens.world/tools/image-editor" />
+  <meta name="twitter:title"       content="Free Image Editor | Cubosapiens" />
+  <meta name="twitter:description" content="Resize, crop, shape-clip, lasso cut — all in your browser." />
+  <meta name="twitter:image"       content="https://cubosapiens.world/assets/og-image-editor.png" />
+
+  <!-- ══════════════════════════════════════════
+       STRUCTURED DATA — WebApplication schema
+       This enables Google's rich results (star ratings,
+       category label, pricing) next to your search listing.
+  ══════════════════════════════════════════ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "cuboShape – Image Editor",
+    "url": "https://cubosapiens.world/tools/image-editor",
+    "description": "Free browser-based image editor. Resize, crop, clip to shapes, polygon-lasso cut subjects, rotate and flip images — no upload, 100% private.",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Web",
+    "browserRequirements": "Requires JavaScript",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Cubosapiens",
+      "url": "https://cubosapiens.world"
+    },
+    "featureList": [
+      "Image resize with presets",
+      "Drag crop with aspect ratio lock",
+      "Shape clip (circle, hexagon, star, heart, blob and more)",
+      "Polygon lasso cut with transparent background",
+      "Rotate and flip",
+      "Bulk resize with ZIP download",
+      "No upload — runs 100% in browser"
+    ],
+    "screenshot": "https://cubosapiens.world/assets/og-image-editor.png"
+  }
+  </script>
+
+  <!-- Breadcrumb structured data — shows path in Google results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home",  "item": "https://cubosapiens.world" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://cubosapiens.world/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Image Editor", "item": "https://cubosapiens.world/tools/image-editor" }
+    ]
+  }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,8 +133,8 @@
 
   <header>
     <div class="logo-wrap">
-      <div class="logo-icon"><img src="assets/logo.png" alt="Logo" /></div>
-      <span class="logo-name">cubo<span>Shape</span></span>
+      <div class="logo-icon"><img src="logo.png" alt="Logo" /></div>
+      <span class="logo-name">CUBO <span>IMAGE </span> EDITOR</span>
     </div>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
       <span class="toggle-icons">
@@ -76,9 +187,27 @@
         <button class="tab-btn" data-tab="shape">
           <i class="fa-solid fa-shapes"></i> Shape
         </button>
+        <button class="tab-btn" data-tab="lasso">
+          <i class="fa-solid fa-draw-polygon"></i> Lasso Cut
+        </button>
         <button class="tab-btn" data-tab="transform">
           <i class="fa-solid fa-rotate"></i> Transform
         </button>
+      </div>
+
+      <!-- Global download format bar (shown for Crop / Shape / Lasso / Transform) -->
+      <div class="global-fmt-bar card" id="globalFmtBar" style="display:none;">
+        <span class="gfmt-label"><i class="fa-solid fa-download"></i> Download as</span>
+        <div class="gfmt-pills" id="gfmtPills">
+          <button class="gfmt-pill active" data-fmt="png">PNG</button>
+          <button class="gfmt-pill" data-fmt="jpeg">JPEG</button>
+          <button class="gfmt-pill" data-fmt="webp">WebP</button>
+        </div>
+        <div class="gfmt-quality" id="gfmtQualityWrap" style="display:none;">
+          <label>Quality</label>
+          <input type="range" id="gfmtQuality" min="1" max="100" value="92" />
+          <span id="gfmtQualityVal">92%</span>
+        </div>
       </div>
 
       <!-- ── TAB: Resize ── -->
@@ -315,6 +444,78 @@
             <div class="card-label">Shape preview</div>
             <div class="preview-stage checkerboard" id="shapePreviewStage">
               <canvas id="shapeCanvas"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── TAB: Lasso Cut ── -->
+      <div class="tab-content" id="tab-lasso">
+        <div class="two-col">
+
+          <div class="ctrl-panel">
+            <div class="card ctrl-card">
+              <div class="card-label">Polygon lasso tool</div>
+              <p class="hint-text" style="margin-bottom:12px;">
+                Click on the image to place nodes around the subject you want to cut out.
+                Close the path by clicking the first node (it glows red) or pressing
+                <kbd>Enter</kbd>. Press <kbd>Escape</kbd> to cancel.
+              </p>
+
+              <div class="lasso-stats" id="lassoStats">
+                <span class="lasso-stat"><i class="fa-solid fa-circle-dot"></i> <span id="lassoNodeCount">0</span> nodes</span>
+                <span class="lasso-stat"><i class="fa-solid fa-vector-square"></i> <span id="lassoArea">—</span></span>
+              </div>
+            </div>
+
+            <div class="card ctrl-card">
+              <div class="card-label">Background after cut</div>
+              <div class="bg-row">
+                <button class="lasso-bg-btn active" data-lbg="transparent" title="Transparent PNG">
+                  <span class="bg-swatch transparent-swatch"></span> Transparent
+                </button>
+                <button class="lasso-bg-btn" data-lbg="white">
+                  <span class="bg-swatch" style="background:#fff;border:1px solid #ddd;"></span> White
+                </button>
+                <button class="lasso-bg-btn" data-lbg="black">
+                  <span class="bg-swatch" style="background:#000;"></span> Black
+                </button>
+              </div>
+            </div>
+
+            <div class="card ctrl-card">
+              <div class="card-label">Feather edge <span id="featherVal">0px</span></div>
+              <input type="range" id="featherSlider" min="0" max="20" value="0" />
+              <p class="hint-text">Softens the cut edge — useful for natural subjects</p>
+            </div>
+
+            <div class="action-row">
+              <button class="btn-action primary" id="btnApplyLasso" disabled>
+                <i class="fa-solid fa-scissors"></i> Cut & Download
+              </button>
+              <button class="btn-action" id="btnUndoNode">
+                <i class="fa-solid fa-rotate-left"></i> Undo node
+              </button>
+              <button class="btn-action danger" id="btnResetLasso">
+                <i class="fa-solid fa-trash"></i> Reset
+              </button>
+            </div>
+
+            <!-- Keyboard hint -->
+            <div class="kbd-hints">
+              <span><kbd>Click</kbd> Add node</span>
+              <span><kbd>Enter</kbd> Close path</span>
+              <span><kbd>Esc</kbd> Cancel</span>
+              <span><kbd>Z</kbd> Undo last</span>
+            </div>
+          </div>
+
+          <!-- Lasso canvas -->
+          <div class="preview-panel card">
+            <div class="card-label">Click to place nodes — close the shape to cut</div>
+            <div class="lasso-stage" id="lassoStage">
+              <canvas id="lassoCanvas"></canvas>
             </div>
           </div>
 

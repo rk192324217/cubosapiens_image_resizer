@@ -213,20 +213,60 @@ function loadImage(file) {
     initCropCanvas();
     drawShape();
     drawTransform();
+    initLassoCanvas();
   };
   img.src = url;
 }
 
 
-/* ── 7. Tab Switching ── */
+/* ── 7. Tab Switching + Global Format Bar ── */
+const globalFmtBar     = document.getElementById('globalFmtBar');
+const gfmtQualityWrap  = document.getElementById('gfmtQualityWrap');
+const gfmtQuality      = document.getElementById('gfmtQuality');
+const gfmtQualityVal   = document.getElementById('gfmtQualityVal');
+
+let globalFmt     = 'png';
+let globalQuality = 0.92;
+
+// Tabs that show the global format bar (not resize — it has its own)
+const GLOBAL_FMT_TABS = ['crop', 'shape', 'lasso', 'transform'];
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById(`tab-${tab}`).classList.add('active');
+
+    // Show/hide global format bar
+    globalFmtBar.style.display = GLOBAL_FMT_TABS.includes(tab) ? 'flex' : 'none';
+
+    // Init lasso canvas when switching to lasso tab
+    if (tab === 'lasso' && srcImage) initLassoCanvas();
   });
 });
+
+// Global format pill selection
+document.querySelectorAll('.gfmt-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.gfmt-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    globalFmt = pill.dataset.fmt;
+    const lossy = ['jpeg', 'webp'].includes(globalFmt);
+    gfmtQualityWrap.style.display = lossy ? 'flex' : 'none';
+  });
+});
+
+gfmtQuality.addEventListener('input', () => {
+  globalQuality = parseInt(gfmtQuality.value) / 100;
+  gfmtQualityVal.textContent = gfmtQuality.value + '%';
+});
+
+
+/* ── loadImage — also init lasso ── */
+// (patch: also call initLassoCanvas on image load)
+const _origLoadImage = loadImage;
 
 
 /* ══════════════════════════════════════
@@ -855,14 +895,274 @@ function download(canvas, fmt, quality, name) {
   }, mime, quality);
 }
 
-function downloadCanvas(canvas, name) {
+// For Crop / Shape / Lasso / Transform — uses the global format bar selection
+function downloadWithGlobalFmt(canvas, baseName) {
+  const fmt     = globalFmt;
+  const quality = ['jpeg','webp'].includes(fmt) ? globalQuality : 1;
+  const mime    = fmt === 'jpeg' ? 'image/jpeg' : `image/${fmt}`;
+  const ext     = fmt === 'jpeg' ? 'jpg' : fmt;
   canvas.toBlob(blob => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${name}.png`;
+    a.download = `${baseName}.${ext}`;
     a.click();
-  }, 'image/png', 1);
+  }, mime, quality);
 }
+
+// Legacy alias — now routes through global format
+function downloadCanvas(canvas, name) {
+  downloadWithGlobalFmt(canvas, name);
+}
+
+
+/* ══════════════════════════════════════
+   ── 15. LASSO CUT TAB ──
+══════════════════════════════════════ */
+
+/* State */
+let lassoNodes    = [];    // [{x, y}] in canvas display coordinates
+let lassoNatNodes = [];    // [{x, y}] in natural image coordinates
+let lassoClosed   = false;
+let lassoScale    = 1;     // natural → display
+let lassoBg       = 'transparent';
+let featherRadius = 0;
+
+/* Element refs */
+const lassoCanvas      = document.getElementById('lassoCanvas');
+const lassoCtx         = lassoCanvas.getContext('2d');
+const lassoNodeCount   = document.getElementById('lassoNodeCount');
+const lassoArea        = document.getElementById('lassoArea');
+const btnApplyLasso    = document.getElementById('btnApplyLasso');
+const btnUndoNode      = document.getElementById('btnUndoNode');
+const btnResetLasso    = document.getElementById('btnResetLasso');
+const featherSlider    = document.getElementById('featherSlider');
+const featherVal       = document.getElementById('featherVal');
+
+/* Init lasso canvas with the loaded image */
+function initLassoCanvas() {
+  if (!srcImage) return;
+
+  // Scale image to fit container (max 700×520)
+  const maxW = 700, maxH = 520;
+  const scale = Math.min(maxW / srcImage.naturalWidth, maxH / srcImage.naturalHeight, 1);
+  lassoScale = 1 / scale;
+
+  lassoCanvas.width  = Math.round(srcImage.naturalWidth  * scale);
+  lassoCanvas.height = Math.round(srcImage.naturalHeight * scale);
+
+  // Reset state when loading a new image
+  lassoNodes    = [];
+  lassoNatNodes = [];
+  lassoClosed   = false;
+  btnApplyLasso.disabled = true;
+  lassoNodeCount.textContent = '0';
+  lassoArea.textContent      = '—';
+
+  drawLassoFrame();
+}
+
+/* Draw the current state: image + polygon overlay */
+function drawLassoFrame() {
+  lassoCtx.clearRect(0, 0, lassoCanvas.width, lassoCanvas.height);
+
+  // Draw source image
+  lassoCtx.drawImage(srcImage, 0, 0, lassoCanvas.width, lassoCanvas.height);
+
+  if (lassoNodes.length === 0) return;
+
+  // Dim the image outside the polygon when closed
+  if (lassoClosed) {
+    lassoCtx.save();
+    lassoCtx.fillStyle = 'rgba(0,0,0,0.45)';
+    lassoCtx.fillRect(0, 0, lassoCanvas.width, lassoCanvas.height);
+
+    lassoCtx.globalCompositeOperation = 'destination-out';
+    lassoCtx.beginPath();
+    lassoCtx.moveTo(lassoNodes[0].x, lassoNodes[0].y);
+    lassoNodes.forEach((n, i) => { if (i > 0) lassoCtx.lineTo(n.x, n.y); });
+    lassoCtx.closePath();
+    lassoCtx.fill();
+    lassoCtx.restore();
+  }
+
+  // Draw polygon lines
+  lassoCtx.save();
+  lassoCtx.strokeStyle = '#e34949';
+  lassoCtx.lineWidth   = 2;
+  lassoCtx.setLineDash([6, 3]);
+  lassoCtx.lineDashOffset = Date.now() / 50; // animated march
+  lassoCtx.beginPath();
+  lassoCtx.moveTo(lassoNodes[0].x, lassoNodes[0].y);
+  lassoNodes.forEach((n, i) => { if (i > 0) lassoCtx.lineTo(n.x, n.y); });
+  if (lassoClosed) lassoCtx.closePath();
+  lassoCtx.stroke();
+  lassoCtx.restore();
+
+  // Draw nodes
+  lassoNodes.forEach((n, i) => {
+    lassoCtx.beginPath();
+    lassoCtx.arc(n.x, n.y, i === 0 ? 7 : 5, 0, Math.PI * 2);
+    lassoCtx.fillStyle   = i === 0 ? '#e34949' : '#ffffff';
+    lassoCtx.strokeStyle = '#e34949';
+    lassoCtx.lineWidth   = 2;
+    lassoCtx.fill();
+    lassoCtx.stroke();
+  });
+
+  // Animate marching ants
+  if (!lassoClosed) {
+    requestAnimationFrame(drawLassoFrame);
+  }
+}
+
+/* Handle canvas click — add node or close path */
+lassoCanvas.addEventListener('click', e => {
+  if (lassoClosed) return;
+
+  const rect = lassoCanvas.getBoundingClientRect();
+  const x    = (e.clientX - rect.left) * (lassoCanvas.width  / rect.width);
+  const y    = (e.clientY - rect.top)  * (lassoCanvas.height / rect.height);
+
+  // Check if clicking near the first node to close
+  if (lassoNodes.length >= 3) {
+    const first = lassoNodes[0];
+    const dist  = Math.hypot(x - first.x, y - first.y);
+    if (dist < 14) {
+      closeLassoPath();
+      return;
+    }
+  }
+
+  lassoNodes.push({ x, y });
+  lassoNatNodes.push({ x: x * lassoScale, y: y * lassoScale });
+  lassoNodeCount.textContent = lassoNodes.length;
+  drawLassoFrame();
+});
+
+function closeLassoPath() {
+  lassoClosed = true;
+  btnApplyLasso.disabled = false;
+  lassoNodeCount.textContent = lassoNodes.length;
+  updateLassoArea();
+  drawLassoFrame();
+  showToast('Path closed — click Cut & Download');
+}
+
+function updateLassoArea() {
+  // Shoelace formula for polygon area in natural pixels
+  let area = 0;
+  const n  = lassoNatNodes.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += lassoNatNodes[i].x * lassoNatNodes[j].y;
+    area -= lassoNatNodes[j].x * lassoNatNodes[i].y;
+  }
+  const px = Math.round(Math.abs(area) / 2);
+  lassoArea.textContent = px.toLocaleString() + ' px²';
+}
+
+/* Undo last node */
+btnUndoNode.addEventListener('click', () => {
+  if (lassoClosed) {
+    lassoClosed = false;
+    btnApplyLasso.disabled = true;
+  }
+  lassoNodes.pop();
+  lassoNatNodes.pop();
+  lassoNodeCount.textContent = lassoNodes.length;
+  drawLassoFrame();
+});
+
+/* Reset */
+btnResetLasso.addEventListener('click', () => {
+  lassoNodes    = [];
+  lassoNatNodes = [];
+  lassoClosed   = false;
+  btnApplyLasso.disabled = true;
+  lassoNodeCount.textContent = '0';
+  lassoArea.textContent      = '—';
+  if (srcImage) drawLassoFrame();
+});
+
+/* Lasso background selector */
+document.querySelectorAll('.lasso-bg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lasso-bg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    lassoBg = btn.dataset.lbg;
+  });
+});
+
+/* Feather slider */
+featherSlider.addEventListener('input', () => {
+  featherRadius = parseInt(featherSlider.value);
+  featherVal.textContent = featherRadius + 'px';
+});
+
+/* Keyboard shortcuts for lasso */
+document.addEventListener('keydown', e => {
+  // Only act when lasso tab is active
+  if (!document.getElementById('tab-lasso').classList.contains('active')) return;
+
+  if (e.key === 'Enter' && !lassoClosed && lassoNodes.length >= 3) {
+    closeLassoPath();
+  }
+  if (e.key === 'Escape') {
+    btnResetLasso.click();
+  }
+  if ((e.key === 'z' || e.key === 'Z') && !e.ctrlKey && !e.metaKey) {
+    btnUndoNode.click();
+  }
+});
+
+/* Apply lasso — cut subject and export with chosen background */
+btnApplyLasso.addEventListener('click', () => {
+  if (!srcImage || !lassoClosed || lassoNatNodes.length < 3) return;
+
+  // Find bounding box of the polygon in natural pixels
+  const xs = lassoNatNodes.map(n => n.x);
+  const ys = lassoNatNodes.map(n => n.y);
+  const minX = Math.max(0, Math.floor(Math.min(...xs)));
+  const minY = Math.max(0, Math.floor(Math.min(...ys)));
+  const maxX = Math.min(srcImage.naturalWidth,  Math.ceil(Math.max(...xs)));
+  const maxY = Math.min(srcImage.naturalHeight, Math.ceil(Math.max(...ys)));
+  const outW = maxX - minX;
+  const outH = maxY - minY;
+
+  // Offscreen canvas at full natural resolution
+  const out    = document.createElement('canvas');
+  out.width    = outW;
+  out.height   = outH;
+  const octx   = out.getContext('2d');
+
+  // Fill background if not transparent
+  if (lassoBg === 'white') { octx.fillStyle = '#ffffff'; octx.fillRect(0, 0, outW, outH); }
+  if (lassoBg === 'black') { octx.fillStyle = '#000000'; octx.fillRect(0, 0, outW, outH); }
+
+  // Clip to polygon (offset by bounding box origin)
+  octx.save();
+  octx.beginPath();
+  lassoNatNodes.forEach((n, i) => {
+    i === 0
+      ? octx.moveTo(n.x - minX, n.y - minY)
+      : octx.lineTo(n.x - minX, n.y - minY);
+  });
+  octx.closePath();
+
+  // Feather: blur canvas before clip for soft edges
+  if (featherRadius > 0) {
+    octx.filter = `blur(${featherRadius}px)`;
+  }
+
+  octx.clip();
+  octx.filter = 'none';
+  octx.drawImage(srcImage, -minX, -minY, srcImage.naturalWidth, srcImage.naturalHeight);
+  octx.restore();
+
+  const baseName = (srcFile ? srcFile.name.replace(/\.[^.]+$/, '') : 'cut') + '_lasso';
+  downloadWithGlobalFmt(out, baseName);
+  showToast('Cut image downloaded!');
+});
 
 
 /* ── 13. formatBytes ── */
